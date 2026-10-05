@@ -1,52 +1,10 @@
 # br.utils
 
-Shared Java utilities used by Sankhya custom Java modules (Módulos Java):
+Lightweight Java HTTP helpers (like a tiny Axios) plus null-safe string utilities. Works with any project.
 
-| Class | Purpose |
-|-------|---------|
-| `br.utils.sendGet` | HTTP GET with delay + JSON response as String |
-| `br.utils.sendPost` | HTTP POST (`Content-Type: application/json`) with delay |
-| `br.utils.sendPut` | HTTP PUT with delay |
-| `br.utils.strings` | Null-safe string helpers (`validateString`, `isStringUsable`) |
+## Install
 
-## Why a separate package
-
-Sankhya loads classes from installed Java modules. Install **br.utils once**; other modules compile against it and do **not** need to re-export these classes inside every module JAR.
-
-## Install on Sankhya
-
-1. Build the JAR (Maven or Eclipse export).
-2. Upload `br.utils-1.0.0.jar` on **Sankhya → Módulos Java**.
-3. Install/activate the module **before** modules that depend on it.
-
-## Use in another Eclipse project
-
-1. Project → Properties → Java Build Path → Libraries → Add External JARs.
-2. Select `br.utils-1.0.0.jar` (or the local `_libs/br.utils.jar`).
-3. Import as usual:
-
-```java
-import br.utils.sendPost;
-import br.utils.strings;
-
-String body = sendPost.send(url, payload);
-String safe = strings.validateString(value);
-```
-
-When exporting that project’s Sankhya module JAR, **exclude** `br.utils` (it is already installed on the server).
-
-## Maven (publish / consume)
-
-> **Note:** [mvnrepository.com](https://mvnrepository.com) is a **read-only index**.  
-> You do **not** upload there. You publish to **Maven Central**; Maven Central is then indexed on mvnrepository automatically (usually within a few days).
-
-### Coordinates
-
-| Field | Value |
-|-------|--------|
-| `groupId` | `io.github.gui1949` |
-| `artifactId` | `utils` |
-| `version` | `1.0.0` |
+### Maven
 
 ```xml
 <dependency>
@@ -56,38 +14,87 @@ When exporting that project’s Sankhya module JAR, **exclude** `br.utils` (it i
 </dependency>
 ```
 
+### Gradle
+
 ```groovy
 implementation 'io.github.gui1949:utils:1.0.0'
 ```
 
-### Publish to Maven Central (one-time setup)
+### JAR
 
-1. Create an account: [central.sonatype.com](https://central.sonatype.com)
-2. **Verify the namespace** `io.github.gui1949` via GitHub verification (user `Gui1949`).
-3. Create a **GPG key** and publish the public key to a keyserver (e.g. `keyserver.ubuntu.com`).
-4. Put credentials in `~/.m2/settings.xml` (Central Portal token user/password).
-5. From this project folder:
+Download `utils-1.0.0.jar` from [Maven Central](https://central.sonatype.com/artifact/io.github.gui1949/utils) (or build with `mvn clean package`) and add it to your classpath.
 
-```bash
-mvn clean verify
+## Requirements
+
+- Java 8+
+- No other dependencies
+
+## Quick start
+
+```java
+import br.utils.sendGet;
+import br.utils.sendPost;
+import br.utils.sendPut;
+import br.utils.strings;
+
+public class Example {
+    public static void main(String[] args) throws Exception {
+        // GET
+        String body = sendGet.send("https://api.example.com/items");
+
+        // POST (JSON)
+        String created = sendPost.send(
+            "https://api.example.com/items",
+            "{\"name\":\"x\",\"qty\":1}"
+        );
+
+        // PUT
+        String updated = sendPut.send(
+            "https://api.example.com/items/1",
+            "{\"name\":\"y\"}"
+        );
+
+        // String helpers
+        String safe = strings.validateString(null); // → ""
+        boolean ok  = new strings().isStringUsable("abc"); // → true
+    }
+}
 ```
 
-6. Publish the staged artifacts via the Central Portal UI or `mvn deploy` (with the Central Publishing Maven plugin / OSSRH-compatible profile configured in `settings.xml`).
-7. Wait for approval/indexing. Then search:
-   - <https://mvnrepository.com/artifact/io.github.gui1949/utils>
-   - <https://central.sonatype.com/artifact/io.github.gui1949/utils>
+## API
 
-### Build locally (no publish)
+### `br.utils.sendGet`
 
-```bash
-mvn clean package
-# target/utils-1.0.0.jar
-```
+| Method | Description |
+|--------|-------------|
+| `public static String send(String url) throws Exception` | HTTP GET. Returns response body as `String`. |
 
-Eclipse-only (no Maven): export **br.utils** as a JAR file → put it in `_libs/br.utils.jar` → reference that path from other projects.
+### `br.utils.sendPost`
 
-## Notes
+| Method | Description |
+|--------|-------------|
+| `public static String send(String url, String data) throws Exception` | HTTP POST with `Content-Type: application/json`. `data` is the request body. Returns response body as `String`. |
 
-- `send*` methods include a random `Thread.sleep` (500–1000 ms) before the request and a short sleep after reading the response. Keep that behavior in mind for batch jobs.
-- Java target: **8+** (compatible with typical Sankhya server runtimes).
-- License: MIT (see `pom.xml`).
+### `br.utils.sendPut`
+
+| Method | Description |
+|--------|-------------|
+| `public static String send(String url, String data) throws Exception` | HTTP PUT with `Content-Type: application/json`. `data` is the request body. Returns response body as `String`. |
+
+### `br.utils.strings`
+
+| Method | Description |
+|--------|-------------|
+| `public static String validateString(Object data)` | `data.toString()`; on `null` or error returns `""`. |
+| `public Boolean isStringUsable(String s)` | `true` if `s` is not `null` and not empty. |
+
+## Behavior notes
+
+- All `send*` methods set `User-Agent: Mozilla/5.0`.
+- `send*` methods add a short random delay (**500–1000 ms**) before the request and a brief pause (**500 ms**) after reading the response. Keep that in mind for batch jobs.
+- Spaces in the URL are removed before the request.
+- Non-2xx responses: `send*` throws (reads `getInputStream()` only).
+
+## License
+
+MIT

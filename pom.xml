@@ -4,18 +4,13 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <!--
-    Namespace must be verified on https://central.sonatype.com
-    (GitHub user: Gui1949) before this artifact can be published
-    to Maven Central.
-  -->
   <groupId>io.github.gui1949</groupId>
   <artifactId>utils</artifactId>
   <version>1.0.0</version>
   <packaging>jar</packaging>
 
-  <name>br.utils</name>
-  <description>Shared HTTP and string utilities (sendGet, sendPost, sendPut, strings) used by Sankhya custom Java modules.</description>
+  <name>utils</name>
+  <description>Lightweight Java HTTP helpers (GET/POST/PUT) and null-safe string utilities. Works with any project.</description>
   <url>https://github.com/Gui1949/br-utils</url>
 
   <licenses>
@@ -69,6 +64,8 @@
         <configuration>
           <doclint>none</doclint>
           <quiet>true</quiet>
+          <encoding>UTF-8</encoding>
+          <charset>UTF-8</charset>
         </configuration>
         <executions>
           <execution>
@@ -81,6 +78,12 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-gpg-plugin</artifactId>
         <version>3.2.4</version>
+        <configuration>
+          <gpgArguments>
+            <arg>--pinentry-mode</arg>
+            <arg>loopback</arg>
+          </gpgArguments>
+        </configuration>
         <executions>
           <execution>
             <id>sign-artifacts</id>
@@ -88,6 +91,16 @@
             <goals><goal>sign</goal></goals>
           </execution>
         </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.sonatype.central</groupId>
+        <artifactId>central-publishing-maven-plugin</artifactId>
+        <version>0.6.0</version>
+        <extensions>true</extensions>
+        <configuration>
+          <publishingServerId>central</publishingServerId>
+          <autoPublish>true</autoPublish>
+        </configuration>
       </plugin>
     </plugins>
   </build>
